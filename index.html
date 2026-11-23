@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="icons/record-icon.svg">
+    <script src="database.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="backup.js" defer></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#222222">
+    
+    <title>Analog Media Tracker</title>
+</head>
+<body>
+    
+<section aria-labelledby="collection-heading">
+  <h2 id="collection-heading">My Collection</h2>
+  <p id="collection-summary" aria-live="polite"></p>
+
+  <!-- Your export, restore, sort, and search controls go here -->
+    <button type="button" id="export-backup-button">Export Backup</button>
+    <button type="button" id="export-owner-backup-button">Export Selected Owner</button>
+
+    <label for="restore-backup-file">Restore from backup file</label>
+<input
+  type="file"
+  id="restore-backup-file"
+  accept=".json,application/json">
+
+  <label for="collection-sort">Sort by</label>
+
+<select id="collection-sort">
+  <option value="artist-asc">Artist (A–Z)</option>
+  <option value="album-asc">Album (A–Z)</option>
+  <option value="year-desc">Pressing year (newest first)</option>
+  <option value="year-asc">Pressing year (oldest first)</option>
+  <option value="genre-asc">Genre (A–Z)</option>
+
+</select>
+<label for="genre-filter">Filter by genre</label>
+<select id="genre-filter">
+  <option value="">All genres</option>
+</select>
+
+<label for="owner-filter">Filter by owner</label>
+<select id="owner-filter">
+  <option value="">All owners</option>
+</select>
+
+<label for="collection-search">Search your collection</label>
+<input
+  id="collection-search"
+  type="search"
+  placeholder="Search artist, album, track, or issue"
+>
+<label for="replacement-filter">Replacement filter</label>
+<select id="replacement-filter">
+  <option value="all">Show all albums</option>
+  <option value="needed">Needs replacement</option>
+</select>
+
+    <button type="button" id="shopping-view-toggle" aria-pressed="false">
+      Shopping view
+    </button>
+
+    <div class="table-wrapper">
+
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Artist</th>
+          <th scope="col">Album</th>
+          <th scope="col">Needs replacement</th>
+          <th scope="col">Known Issues</th>
+          <th scope="col">Vinyl condition</th>
+          <th scope="col">Sleeve condition</th>
+          <th scope="col">Genre</th>
+          <th scope="col">Storage location</th>
+          <th scope="col">Album Release Date</th>
+          <th scope="col">Pressing Year</th>
+          <th scope="col">Price paid (USD)</th>
+          <th scope="col">Owner</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="collection-table-body">
+        <!-- JavaScript will add album rows here -->
+      </tbody>
+    </table>
+  </div>
+</section>
+<details id="add-record-panel">
+  <summary>Add a record</summary>
+    <section aria-labelledby="add-record-heading">
+    <h2 id="add-record-heading">Add a Record</h2>
+
+    <form id="album-form">
+  <label for="artist">Artist</label>
+  <input id="artist" name="artist" required>
+
+  <label for="album">Album</label>
+  <input id="album" name="album" required>
+
+  <label class="needs-replacement-control">
+    <input
+      type="checkbox"
+      id="needs-replacement"
+      name="needsReplacement"
+    >
+    <span>Needs replacement</span>
+  </label>
+
+  <h3>Tracks and issues</h3>
+  <div id="track-list"></div>
+
+  <button type="button" id="add-track-button">Add Another Track</button>
+
+  <label for="vinyl-condition">Vinyl condition</label>
+  <select id="vinyl-condition" name="vinylCondition">
+    <option value="">Choose a condition</option>
+    <option>Mint</option>
+    <option>Near Mint</option>
+    <option>Very Good Plus</option>
+    <option>Very Good</option>
+    <option>Good</option>
+    <option>Poor</option>
+  </select>
+
+  <label for="sleeve-condition">Sleeve condition</label>
+  <select id="sleeve-condition" name="sleeveCondition">
+    <option value="">Choose a condition</option>
+    <option>Mint</option>
+    <option>Near Mint</option>
+    <option>Very Good Plus</option>
+    <option>Very Good</option>
+    <option>Good</option>
+    <option>Poor</option>
+  </select>
+
+  <label for="genre">Genre (optional)</label>
+  <input
+    id="genre"
+    name="genre"
+    type="text"
+    placeholder="Search artist, album, genre, location, track, or issue"
+  >
+
+  <label for="storage-location">Storage location (optional)</label>
+  <input
+    id="storage-location"
+    name="storageLocation"
+    type="text"
+    placeholder="e.g., Living room / Shelf 2"
+  >
+
+  <label for="release-date">Album release date</label>
+  <input id="release-date" name="releaseDate" type="date">
+
+  <label for="pressing-year">Pressing year</label>
+  <input
+    id="pressing-year"
+    name="pressingYear"
+    type="number"
+    min="1900"
+    max="2100"
+  >
+
+  <label for="purchase-price">Price paid (USD)</label>
+  <input
+    id="purchase-price"
+    name="purchasePrice"
+    type="number"
+    min="0"
+    step="0.01"
+    inputmode="decimal"
+    placeholder="0.00"
+  >
+
+  <label for="owner">Owner (optional)</label>
+  <input
+    id="owner"
+    name="owner"
+    type="text"
+    placeholder="e.g., Alex"
+  >
+
+  <button type="submit" id="save-album-button">Save Record</button>
+  <button type="button" id="cancel-edit-button" hidden>Cancel Edit</button>
+</form>
+
+  </section>
+</details>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js")
+        .catch((error) => {
+          console.error("Service worker registration failed:", error);
+        });
+    });
+  }
+</script>
+</body>
+</html>
