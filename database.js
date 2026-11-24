@@ -25,7 +25,23 @@ async function saveAlbum(album) {
 
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE_NAME, "readwrite");
-    transaction.objectStore(STORE_NAME).put(album);
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(album.id);
+
+    request.onsuccess = () => {
+      const existingAlbum = request.result;
+      const now = new Date().toISOString();
+
+      const albumToSave = {
+        ...album,
+        createdAt:
+          album.createdAt || existingAlbum?.createdAt || now,
+        updatedAt:
+          album.updatedAt || now
+      };
+
+      store.put(albumToSave);
+    };
 
     transaction.oncomplete = () => {
       database.close();
@@ -33,6 +49,11 @@ async function saveAlbum(album) {
     };
 
     transaction.onerror = () => {
+      database.close();
+      reject(transaction.error);
+    };
+
+    transaction.onabort = () => {
       database.close();
       reject(transaction.error);
     };

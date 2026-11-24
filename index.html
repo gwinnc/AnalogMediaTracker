@@ -18,57 +18,59 @@
 <section aria-labelledby="collection-heading">
   <h2 id="collection-heading">My Collection</h2>
   <p id="collection-summary" aria-live="polite"></p>
+  <p id="collection-stats" aria-live="polite"></p>
 
   <!-- Your export, restore, sort, and search controls go here -->
     <button type="button" id="export-backup-button">Export Backup</button>
     <button type="button" id="export-owner-backup-button">Export Selected Owner</button>
 
     <label for="restore-backup-file">Restore from backup file</label>
-<input
-  type="file"
-  id="restore-backup-file"
-  accept=".json,application/json">
+  <input
+    type="file"
+    id="restore-backup-file"
+    accept=".json,application/json">
 
-  <label for="collection-sort">Sort by</label>
+    <label for="collection-sort">Sort by</label>
 
-<select id="collection-sort">
-  <option value="artist-asc">Artist (A–Z)</option>
-  <option value="album-asc">Album (A–Z)</option>
-  <option value="year-desc">Pressing year (newest first)</option>
-  <option value="year-asc">Pressing year (oldest first)</option>
-  <option value="genre-asc">Genre (A–Z)</option>
+  <select id="collection-sort">
+    <option value="artist-asc">Artist (A–Z)</option>
+    <option value="album-asc">Album (A–Z)</option>
+    <option value="year-desc">Pressing year (newest first)</option>
+    <option value="year-asc">Pressing year (oldest first)</option>
+    <option value="genre-asc">Genre (A–Z)</option>
+    <option value="created-desc">Recently added</option>
+    <option value="updated-desc">Recently edited</option>
 
-</select>
-<label for="genre-filter">Filter by genre</label>
-<select id="genre-filter">
-  <option value="">All genres</option>
-</select>
 
-<label for="owner-filter">Filter by owner</label>
-<select id="owner-filter">
-  <option value="">All owners</option>
-</select>
+  </select>
+  <label for="genre-filter">Filter by genre</label>
+  <select id="genre-filter">
+    <option value="">All genres</option>
+  </select>
 
-<label for="collection-search">Search your collection</label>
-<input
-  id="collection-search"
-  type="search"
-  placeholder="Search artist, album, track, or issue"
->
-<label for="replacement-filter">Replacement filter</label>
-<select id="replacement-filter">
-  <option value="all">Show all albums</option>
-  <option value="needed">Needs replacement</option>
-</select>
+  <label for="owner-filter">Filter by owner</label>
+  <select id="owner-filter">
+    <option value="">All owners</option>
+  </select>
 
-    <button type="button" id="shopping-view-toggle" aria-pressed="false">
-      Shopping view
-    </button>
+  <label for="collection-search">Search your collection</label>
+  <input
+    id="collection-search"
+    type="search"
+    placeholder="Search artist, album, track, or issue"
+  >
+  <label for="replacement-filter">Replacement filter</label>
+  <select id="replacement-filter">
+    <option value="all">Show all albums</option>
+    <option value="needed">Needs replacement</option>
+  </select>
 
-    
+      <button type="button" id="shopping-view-toggle" aria-pressed="false">
+        Shopping view
+      </button>
 
-    <div class="table-wrapper">
-  <nav id="artist-letter-nav" aria-label="Jump to artist" hidden></nav>
+  <div class="table-wrapper">
+  <div class="table-scroll">
     <table>
       <thead>
         <tr>
@@ -84,6 +86,7 @@
           <th scope="col">Pressing Year</th>
           <th scope="col">Price paid (USD)</th>
           <th scope="col">Owner</th>
+          <th scope="col">Last edited</th>
           <th scope="col">Actions</th>
         </tr>
       </thead>
@@ -92,109 +95,143 @@
       </tbody>
     </table>
   </div>
-</section>
-<details id="add-record-panel">
-  <summary>Add a record</summary>
-    <section aria-labelledby="add-record-heading">
-    <h2 id="add-record-heading">Add a Record</h2>
+  <nav id="artist-letter-nav" aria-label="Jump to artist" hidden></nav>
+</div>
 
-    <form id="album-form">
-  <label for="artist">Artist</label>
-  <input id="artist" name="artist" required>
+  </section>
+  <details id="add-record-panel">
+    <summary>Add a record</summary>
+      <section aria-labelledby="add-record-heading">
+      <h2 id="add-record-heading">Add a Record</h2>
 
-  <label for="album">Album</label>
-  <input id="album" name="album" required>
+      <form id="album-form">
+    <label for="artist">Artist</label>
+    <input id="artist" name="artist" required>
 
-  <label class="needs-replacement-control">
+    <label for="album">Album</label>
+    <input id="album" name="album" required>
+    
+    <label for="album-images">Album Art</label>
+      <input
+        id="album-images"
+        name="albumImages"
+        type="file"
+        accept="image/*"
+        multiple
+      >
+  <div id="album-image-preview" aria-live="polite"></div>
+
+
+    <label class="needs-replacement-control">
+      <input
+        type="checkbox"
+        id="needs-replacement"
+        name="needsReplacement"
+      >
+      <span>Needs replacement</span>
+    </label>
+
+    <h3>Tracks and issues</h3>
+    <div id="track-list"></div>
+
+    <button type="button" id="add-track-button">Add Another Track</button>
+
+    <label for="vinyl-condition">Vinyl condition</label>
+    <select id="vinyl-condition" name="vinylCondition">
+      <option value="">Choose a condition</option>
+      <option>Mint</option>
+      <option>Near Mint</option>
+      <option>Very Good Plus</option>
+      <option>Very Good</option>
+      <option>Good</option>
+      <option>Poor</option>
+    </select>
+
+    <label for="sleeve-condition">Sleeve condition</label>
+    <select id="sleeve-condition" name="sleeveCondition">
+      <option value="">Choose a condition</option>
+      <option>Mint</option>
+      <option>Near Mint</option>
+      <option>Very Good Plus</option>
+      <option>Very Good</option>
+      <option>Good</option>
+      <option>Poor</option>
+    </select>
+
+    <label for="genre">Genre (optional)</label>
     <input
-      type="checkbox"
-      id="needs-replacement"
-      name="needsReplacement"
+      id="genre"
+      name="genre"
+      type="text"
+      placeholder="Search artist, album, genre, location, track, or issue"
     >
-    <span>Needs replacement</span>
-  </label>
 
-  <h3>Tracks and issues</h3>
-  <div id="track-list"></div>
+    <label for="storage-location">Storage location (optional)</label>
+    <input
+      id="storage-location"
+      name="storageLocation"
+      type="text"
+      placeholder="e.g., Living room / Shelf 2"
+    >
 
-  <button type="button" id="add-track-button">Add Another Track</button>
+    <label for="release-date">Album release date</label>
+    <input id="release-date" name="releaseDate" type="date">
 
-  <label for="vinyl-condition">Vinyl condition</label>
-  <select id="vinyl-condition" name="vinylCondition">
-    <option value="">Choose a condition</option>
-    <option>Mint</option>
-    <option>Near Mint</option>
-    <option>Very Good Plus</option>
-    <option>Very Good</option>
-    <option>Good</option>
-    <option>Poor</option>
-  </select>
+    <label for="pressing-year">Pressing year</label>
+    <input
+      id="pressing-year"
+      name="pressingYear"
+      type="number"
+      min="1900"
+      max="2100"
+    >
 
-  <label for="sleeve-condition">Sleeve condition</label>
-  <select id="sleeve-condition" name="sleeveCondition">
-    <option value="">Choose a condition</option>
-    <option>Mint</option>
-    <option>Near Mint</option>
-    <option>Very Good Plus</option>
-    <option>Very Good</option>
-    <option>Good</option>
-    <option>Poor</option>
-  </select>
+    <label for="purchase-price">Price paid (USD)</label>
+    <input
+      id="purchase-price"
+      name="purchasePrice"
+      type="number"
+      min="0"
+      step="0.01"
+      inputmode="decimal"
+      placeholder="0.00"
+    >
 
-  <label for="genre">Genre (optional)</label>
-  <input
-    id="genre"
-    name="genre"
-    type="text"
-    placeholder="Search artist, album, genre, location, track, or issue"
-  >
+    <label for="owner">Owner (optional)</label>
+    <input
+      id="owner"
+      name="owner"
+      type="text"
+      placeholder="e.g., Alex"
+    >
 
-  <label for="storage-location">Storage location (optional)</label>
-  <input
-    id="storage-location"
-    name="storageLocation"
-    type="text"
-    placeholder="e.g., Living room / Shelf 2"
-  >
-
-  <label for="release-date">Album release date</label>
-  <input id="release-date" name="releaseDate" type="date">
-
-  <label for="pressing-year">Pressing year</label>
-  <input
-    id="pressing-year"
-    name="pressingYear"
-    type="number"
-    min="1900"
-    max="2100"
-  >
-
-  <label for="purchase-price">Price paid (USD)</label>
-  <input
-    id="purchase-price"
-    name="purchasePrice"
-    type="number"
-    min="0"
-    step="0.01"
-    inputmode="decimal"
-    placeholder="0.00"
-  >
-
-  <label for="owner">Owner (optional)</label>
-  <input
-    id="owner"
-    name="owner"
-    type="text"
-    placeholder="e.g., Alex"
-  >
-
-  <button type="submit" id="save-album-button">Save Record</button>
-  <button type="button" id="cancel-edit-button" hidden>Cancel Edit</button>
+    <button type="submit" id="save-album-button">Save Record</button>
+    <button type="button" id="cancel-edit-button" hidden>Cancel Edit</button>
 </form>
 
   </section>
 </details>
+<button type="button" id="back-to-top-button" hidden>Back to top</button>
+
+
 <script>
+    const backToTopButton = document.querySelector("#back-to-top-button");
+
+  function updateBackToTopButton() {
+    backToTopButton.hidden = window.scrollY === 0;
+  }
+
+  backToTopButton.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  window.addEventListener("scroll", updateBackToTopButton, {
+    passive: true
+  });
+
+  updateBackToTopButton();
+
+
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("./service-worker.js")
