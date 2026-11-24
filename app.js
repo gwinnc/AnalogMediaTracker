@@ -12,6 +12,7 @@ const genreFilter = document.querySelector("#genre-filter");
 const ownerFilter = document.querySelector("#owner-filter");
 const collectionSummary = document.querySelector("#collection-summary");
 const shoppingViewToggle = document.querySelector("#shopping-view-toggle");
+const artistLetterNav = document.querySelector("#artist-letter-nav");
 const addRecordPanel = document.querySelector("#add-record-panel");
 
 
@@ -243,44 +244,84 @@ function albumMatchesFilters(album, searchTerm, selectedGenre, selectedOwner) {
 
 
 function compareAlbums(first, second, sortMode) {
-  if (sortMode === "album-asc") {
-    return (first.album || "").localeCompare(second.album || "", undefined, {
+    if (sortMode === "album-asc") {
+      return (first.album || "").localeCompare(second.album || "", undefined, {
+        sensitivity: "base",
+        numeric: true
+      });
+    } 
+
+    if (sortMode === "genre-asc") {
+      const firstGenre = (first.genre || "").trim();
+      const secondGenre = (second.genre || "").trim();
+
+      // Keep albums with no genre at the end.
+      if (!firstGenre && secondGenre) return 1;
+      if (firstGenre && !secondGenre) return -1;
+
+      return firstGenre.localeCompare(secondGenre, undefined, {
+        sensitivity: "base",
+        numeric: true
+      });
+    }
+
+    if (sortMode === "year-desc" || sortMode === "year-asc") {
+      const firstYear = Number(first.pressingYear) || 0;
+      const secondYear = Number(second.pressingYear) || 0;
+
+      // Keep albums with no pressing year at the end.
+      if (!firstYear && secondYear) return 1;
+      if (firstYear && !secondYear) return -1;
+
+      return sortMode === "year-desc"
+        ? secondYear - firstYear
+        : firstYear - secondYear;
+    }
+
+    return (first.artist || "").localeCompare(second.artist || "", undefined, {
       sensitivity: "base",
       numeric: true
     });
+}
+function getArtistInitial(artist) {
+  const initial = (artist || "").trim().charAt(0).toLocaleUpperCase();
+  return /^[A-Z]$/.test(initial) ? initial : "#";
+}
+
+function updateArtistLetterNav(albums, sortMode) {
+  artistLetterNav.replaceChildren();
+
+  if (sortMode !== "artist-asc" || albums.length === 0) {
+    artistLetterNav.hidden = true;
+    return;
   }
 
-  if (sortMode === "genre-asc") {
-    const firstGenre = (first.genre || "").trim();
-    const secondGenre = (second.genre || "").trim();
+  const letters = [...new Set(
+    albums.map((album) => getArtistInitial(album.artist))
+  )];
 
-    // Keep albums with no genre at the end.
-    if (!firstGenre && secondGenre) return 1;
-    if (firstGenre && !secondGenre) return -1;
+  for (const letter of letters) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = letter;
+    button.setAttribute(
+      "aria-label",
+      letter === "#"
+        ? "Jump to artists starting with a number or symbol"
+        : `Jump to artists starting with ${letter}`
+    );
 
-    return firstGenre.localeCompare(secondGenre, undefined, {
-      sensitivity: "base",
-      numeric: true
+    button.addEventListener("click", () => {
+      const targetRow = tableBody.querySelector(
+        `tr[data-artist-initial="${letter}"]`
+      );
+      targetRow?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+
+    artistLetterNav.appendChild(button);
   }
 
-  if (sortMode === "year-desc" || sortMode === "year-asc") {
-    const firstYear = Number(first.pressingYear) || 0;
-    const secondYear = Number(second.pressingYear) || 0;
-
-    // Keep albums with no pressing year at the end.
-    if (!firstYear && secondYear) return 1;
-    if (firstYear && !secondYear) return -1;
-
-    return sortMode === "year-desc"
-      ? secondYear - firstYear
-      : firstYear - secondYear;
-  }
-
-  return (first.artist || "").localeCompare(second.artist || "", undefined, {
-    sensitivity: "base",
-    numeric: true
-  });
+  artistLetterNav.hidden = false;
 }
 
 async function renderAlbums() {
@@ -321,11 +362,12 @@ async function renderAlbums() {
   matchingAlbums.sort((first, second) =>
     compareAlbums(first, second, sortMode)
   );
-
+  updateArtistLetterNav(matchingAlbums, sortMode);
   tableBody.replaceChildren();
 
   if (matchingAlbums.length === 0) {
     const row = document.createElement("tr");
+    row.dataset.artistInitial = getArtistInitial(album.artist);
     const cell = document.createElement("td");
 
     cell.colSpan = 13;
@@ -340,7 +382,6 @@ async function renderAlbums() {
 
   for (const album of matchingAlbums) {
   const row = document.createElement("tr");
-
   addCell(row, album.artist);
   addCell(row, album.album);
   addCell(row, album.needsReplacement ? "Needs replacement" : "No");
@@ -399,6 +440,7 @@ async function renderAlbums() {
     row.appendChild(actionsCell);
     tableBody.appendChild(row);
   }
+
 }
 
 function loadAlbumForEditing(album) {

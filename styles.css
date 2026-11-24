@@ -328,6 +328,30 @@ tbody tr:last-child td {
   .table-wrapper.shopping-view tbody td:nth-child(12) {
     display: none;
   }
+  #artist-letter-nav:not([hidden]) {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    white-space: nowrap;
+  }
+
+  #artist-letter-nav button {
+    flex: 0 0 auto;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+
+  tbody tr {
+    scroll-margin-top: 4.5rem;
+  }
 
 
   tbody td:last-child {
