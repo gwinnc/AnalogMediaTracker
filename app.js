@@ -244,6 +244,30 @@ function albumMatchesFilters(album, searchTerm, selectedGenre, selectedOwner) {
 
 
 function compareAlbums(first, second, sortMode) {
+      if (sortMode === "updated-desc") {
+      const firstUpdated = Date.parse(first.updatedAt);
+      const secondUpdated = Date.parse(second.updatedAt);
+
+      // Keep albums without a valid update timestamp at the end.
+      if (!Number.isFinite(firstUpdated) && Number.isFinite(secondUpdated)) return 1;
+      if (Number.isFinite(firstUpdated) && !Number.isFinite(secondUpdated)) return -1;
+
+      return (Number.isFinite(secondUpdated) ? secondUpdated : 0) -
+        (Number.isFinite(firstUpdated) ? firstUpdated : 0);
+    }
+    
+    if (sortMode === "created-desc") {
+      const firstCreated = Date.parse(first.createdAt);
+      const secondCreated = Date.parse(second.createdAt);
+
+      // Keep albums without a valid creation timestamp at the end.
+      if (!Number.isFinite(firstCreated) && Number.isFinite(secondCreated)) return 1;
+      if (Number.isFinite(firstCreated) && !Number.isFinite(secondCreated)) return -1;
+
+      return (Number.isFinite(secondCreated) ? secondCreated : 0) -
+        (Number.isFinite(firstCreated) ? firstCreated : 0);
+    }
+
     if (sortMode === "album-asc") {
       return (first.album || "").localeCompare(second.album || "", undefined, {
         sensitivity: "base",
@@ -356,6 +380,49 @@ async function renderAlbums() {
   collectionSummary.textContent =
     `Showing ${matchingAlbums.length} of ${albums.length} albums · ` +
     `${totalTracks} tracks total · Total recorded cost: ${formattedTotal}`;
+    const uniqueArtistCount = new Set(
+    albums
+      .map((album) => (album.artist || "").trim().toLocaleLowerCase())
+      .filter(Boolean)
+  ).size;
+
+  const uniqueGenreCount = new Set(
+    albums
+      .map((album) => (album.genre || "").trim().toLocaleLowerCase())
+      .filter(Boolean)
+  ).size;
+
+  const replacementCount = albums.filter(
+    (album) => album.needsReplacement === true
+  ).length;
+
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+  const recentlyAddedCount = albums.filter((album) => {
+    const createdAt = Date.parse(album.createdAt);
+    return Number.isFinite(createdAt) && createdAt >= thirtyDaysAgo;
+  }).length;
+
+    const recentlyEditedCount = albums.filter((album) => {
+    const createdAt = Date.parse(album.createdAt);
+    const updatedAt = Date.parse(album.updatedAt);
+
+    return (
+      Number.isFinite(createdAt) &&
+      Number.isFinite(updatedAt) &&
+      updatedAt > createdAt &&
+      updatedAt >= thirtyDaysAgo
+    );
+  }).length;
+
+
+  document.querySelector("#collection-stats").textContent =
+    `${uniqueArtistCount} artists · ${uniqueGenreCount} genres entered · ` +
+    `${replacementCount} records need replacement · ` +
+    `${recentlyAddedCount} added in the last 30 days · ` +
+    `${recentlyEditedCount} edited in the last 30 days`;
+
+
 
   const sortMode = collectionSort.value;
 
@@ -369,7 +436,7 @@ async function renderAlbums() {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
 
-    cell.colSpan = 13;
+    cell.colSpan = 14;
     cell.textContent = searchTerm
       ? "No records match your search."
       : "Your collection is empty.";
@@ -380,61 +447,67 @@ async function renderAlbums() {
   }
 
   for (const album of matchingAlbums) {
-  const row = document.createElement("tr");
-  row.dataset.artistInitial = getArtistInitial(album.artist);
-  addCell(row, album.artist);
-  addCell(row, album.album);
-  addCell(row, album.needsReplacement ? "Needs replacement" : "No");
-  addCell(row, summarizeIssues(album.tracks || []));
-  addCell(row, album.vinylCondition || album.condition);
-  addCell(row, album.sleeveCondition);
-  addCell(row, album.genre);
-  addCell(row, album.storageLocation);
-  addCell(row, album.releaseDate);
-  addCell(row, album.pressingYear);
+    const row = document.createElement("tr");
+    row.dataset.artistInitial = getArtistInitial(album.artist);
+    addCell(row, album.artist);
+    addCell(row, album.album);
+    addCell(row, album.needsReplacement ? "Needs replacement" : "No");
+    addCell(row, summarizeIssues(album.tracks || []));
+    addCell(row, album.vinylCondition || album.condition);
+    addCell(row, album.sleeveCondition);
+    addCell(row, album.genre);
+    addCell(row, album.storageLocation);
+    addCell(row, album.releaseDate);
+    addCell(row, album.pressingYear);
+    
+    const hasPurchasePrice =
+    album.purchasePrice !== "" &&
+    album.purchasePrice !== null &&
+    album.purchasePrice !== undefined;
+    
+    const formattedPurchasePrice = hasPurchasePrice
+    ? new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD"
+    }).format(Number(album.purchasePrice))
+    : "No purchase price recorded";
   
-  const hasPurchasePrice =
-  album.purchasePrice !== "" &&
-  album.purchasePrice !== null &&
-  album.purchasePrice !== undefined;
-  
-  const formattedPurchasePrice = hasPurchasePrice
-  ? new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD"
-  }).format(Number(album.purchasePrice))
-  : "No purchase price recorded";
-  
-  addCell(row, formattedPurchasePrice);
-  addCell(row, album.owner);
-  
-  const actionsCell = document.createElement("td");
+    addCell(row, formattedPurchasePrice);
+    addCell(row, album.owner);
+    const updatedAt = Date.parse(album.updatedAt);
+    const formattedUpdatedAt = Number.isFinite(updatedAt)
+      ? new Date(updatedAt).toLocaleString()
+      : "Not recorded";
 
-    const editButton = document.createElement("button");
-    editButton.type = "button";
-    editButton.textContent = "View / Edit";
-    editButton.addEventListener("click", () => loadAlbumForEditing(album));
+    addCell(row, formattedUpdatedAt);
 
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", async () => {
-      const confirmed = window.confirm(
-        `Delete "${album.album}" by ${album.artist}? This cannot be undone.`
-      );
+    const actionsCell = document.createElement("td");
 
-      if (!confirmed) {
-        return;
-      }
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.textContent = "View / Edit";
+      editButton.addEventListener("click", () => loadAlbumForEditing(album));
 
-      try {
-        await deleteAlbum(album.id);
-        await renderAlbums();
-      } catch (error) {
-        console.error("Could not delete record:", error);
-        alert("The record could not be deleted. Please try again.");
-      }
-    });
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete";
+      deleteButton.addEventListener("click", async () => {
+        const confirmed = window.confirm(
+          `Delete "${album.album}" by ${album.artist}? This cannot be undone.`
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        try {
+          await deleteAlbum(album.id);
+          await renderAlbums();
+        } catch (error) {
+          console.error("Could not delete record:", error);
+          alert("The record could not be deleted. Please try again.");
+        }
+      });
 
     actionsCell.append(editButton, " ", deleteButton);
     row.appendChild(actionsCell);
@@ -492,6 +565,93 @@ addTrackButton.addEventListener("click", () => {
 });
 
 cancelEditButton.addEventListener("click", resetFormForNewAlbum);
+
+const albumImageInput = document.getElementById("album-images");
+const albumImagePreview = document.getElementById("album-image-preview");
+
+let pendingAlbumImages = [];
+
+albumImageInput.addEventListener("change", async () => {
+  const files = [...albumImageInput.files];
+
+  if (files.length > 4) {
+    alert("Choose up to 4 album-art images.");
+    albumImageInput.value = "";
+    return;
+  }
+
+  try {
+    const compressedImages = [];
+
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Choose image files only.");
+      }
+
+      const bitmap = await createImageBitmap(file);
+      const maxDimension = 1200;
+      const scale = Math.min(
+        1,
+        maxDimension / Math.max(bitmap.width, bitmap.height)
+      );
+      const canvas = document.createElement("canvas");
+
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+      const context = canvas.getContext("2d");
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (result) => {
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error("The image could not be compressed."));
+            }
+          },
+          "image/jpeg",
+          0.78
+        );
+      });
+
+      const data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+
+      compressedImages.push({
+        name: file.name,
+        type: "image/jpeg",
+        data
+      });
+    }
+
+    pendingAlbumImages = compressedImages;
+    albumImagePreview.replaceChildren();
+
+    for (const image of pendingAlbumImages) {
+      const preview = document.createElement("img");
+      preview.src = image.data;
+      preview.alt = `Preview of ${image.name}`;
+      preview.style.maxWidth = "120px";
+      preview.style.maxHeight = "120px";
+      preview.style.objectFit = "contain";
+      albumImagePreview.appendChild(preview);
+    }
+  } catch (error) {
+    console.error("Could not prepare album art:", error);
+    alert("One or more images could not be prepared. Try different image files.");
+    albumImageInput.value = "";
+    pendingAlbumImages = [];
+    albumImagePreview.replaceChildren();
+  }
+});
+
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
