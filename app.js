@@ -367,7 +367,6 @@ async function renderAlbums() {
 
   if (matchingAlbums.length === 0) {
     const row = document.createElement("tr");
-    row.dataset.artistInitial = getArtistInitial(album.artist);
     const cell = document.createElement("td");
 
     cell.colSpan = 13;
@@ -382,6 +381,7 @@ async function renderAlbums() {
 
   for (const album of matchingAlbums) {
   const row = document.createElement("tr");
+  row.dataset.artistInitial = getArtistInitial(album.artist);
   addCell(row, album.artist);
   addCell(row, album.album);
   addCell(row, album.needsReplacement ? "Needs replacement" : "No");
