@@ -328,17 +328,28 @@ tbody tr:last-child td {
   .table-wrapper.shopping-view tbody td:nth-child(12) {
     display: none;
   }
+    .table-wrapper {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .table-wrapper > #artist-letter-nav,
+  .table-wrapper > table {
+    grid-area: 1 / 1;
+  }
+
   #artist-letter-nav:not([hidden]) {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    position: fixed;
-    top: 50%;
-    right: 0.5rem;
-    transform: translateY(-50%);
+    align-self: start;
+    justify-self: end;
+    position: sticky;
+    top: 0.5rem;
     z-index: 3;
+    gap: 0.25rem;
     max-height: calc(100vh - 1rem);
     overflow-y: auto;
+    margin: 0.5rem -0.9rem 0.5rem 0.5rem;
     padding: 0.35rem;
     background: #fff;
     border: 1px solid #ddd;
@@ -350,6 +361,7 @@ tbody tr:last-child td {
     min-width: 2.5rem;
     min-height: 2.5rem;
   }
+
 
 
   tbody tr {
