@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#222222">
+  <title>User Guide | Analog Media Tracker</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="icon" type="image/svg+xml" href="./icons/record-icon.svg">
+  <script>
+    try {
+      const savedTheme = localStorage.getItem("analog-media-tracker-theme");
+      const useDarkTheme =
+        savedTheme === "dark" ||
+        (savedTheme !== "light" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.dataset.theme = useDarkTheme ? "dark" : "light";
+    } catch (error) {
+      console.error("Could not read the saved theme preference:", error);
+    }
+  </script>
+</head>
+<body class="user-guide-page">
+  <header class="app-header user-guide-header">
+    <div class="app-heading">
+      <p class="app-eyebrow">ANALOG MEDIA TRACKER</p>
+      <h1>User Guide</h1>
+      <p class="app-subtitle">A quick guide to tracking your record collection.</p>
+    </div>
+    <a class="guide-back-link" href="./">Back to collection</a>
+  </header>
+
+  <main class="user-guide-content">
+    <p class="user-guide-callout">
+      Open the app at
+      <a href="https://gwinnc.github.io/AnalogMediaTracker/">gwinnc.github.io/AnalogMediaTracker</a>.
+      Your collection is stored in your browser on this device.
+    </p>
+
+    <nav class="user-guide-toc" aria-label="Guide contents">
+      <a href="#add-record">Add and edit records</a>
+      <a href="#browse">Browse your collection</a>
+      <a href="#backups">Backups</a>
+      <a href="#install">Add to a device</a>
+      <a href="#updates">Updates and offline use</a>
+    </nav>
+
+    <section class="user-guide-section" id="privacy">
+      <h2>Your collection and privacy</h2>
+      <p>
+        You do not need an account. The app does not upload your collection to
+        GitHub Pages or sync it with other people. Each person—and each browser
+        or device—has a separate collection.
+      </p>
+      <p>
+        Clearing browser site data or changing devices can make your collection
+        unavailable unless you have a backup. Export backups regularly.
+      </p>
+    </section>
+
+    <section class="user-guide-section" id="add-record">
+      <h2>Add and edit records</h2>
+      <ol>
+        <li>Open <strong>Add a record</strong>.</li>
+        <li>Enter the artist and album name. Both are required.</li>
+        <li>
+          Optionally add up to four album-art images. The first image is the
+          cover. Choose <strong>Make cover</strong> under another image to
+          change it. Select × to remove an image, or select an image to view it
+          larger.
+        </li>
+        <li>
+          Add track details as needed: side (A–D), track number, song title, and
+          issue or scratch notes. Choose <strong>Add Another Track</strong> to
+          add more.
+        </li>
+        <li>
+          Add any other details you want: replacement status, vinyl and sleeve
+          condition, genre, storage location, release date, pressing year, price
+          paid, or owner.
+        </li>
+        <li>Choose <strong>Save Record</strong>.</li>
+      </ol>
+      <p>
+        To change a record, choose <strong>View / Edit</strong> in Table or
+        Gallery view, make your changes, and save. Choose
+        <strong>Cancel Edit</strong> to leave without saving.
+      </p>
+    </section>
+
+    <section class="user-guide-section" id="browse">
+      <h2>Browse your collection</h2>
+      <ul>
+        <li>
+          Switch between <strong>Table</strong>, a compact list, and
+          <strong>Gallery</strong>, album cards with cover art.
+        </li>
+        <li>Select a cover to open the larger image viewer.</li>
+        <li>
+          Sort by artist, album, pressing year, genre, recently added, or
+          recently edited. Filter by genre, owner, or replacement status.
+        </li>
+        <li>
+          Search checks artist, album, genre, owner, storage location, track
+          titles, and issue notes.
+        </li>
+        <li>
+          When sorted by <strong>Artist (A–Z)</strong>, use the letter menu to
+          jump to an artist. In mobile Gallery view, the menu is on the right
+          beside the cards.
+        </li>
+        <li>
+          <strong>Shopping view</strong> is available in Table view. It hides
+          some extra details; choose <strong>Show full collection</strong> to
+          return.
+        </li>
+        <li>
+          Use the <strong>Dark mode</strong> switch to choose a theme, or
+          <strong>Use system</strong> to follow your device setting.
+        </li>
+      </ul>
+    </section>
+
+    <section class="user-guide-section" id="delete-records">
+      <h2>Delete a record</h2>
+      <p>
+        Choose <strong>Delete</strong> and confirm. An <strong>Undo</strong>
+        option appears for 10 seconds. If it disappears, use a backup to restore
+        the record.
+      </p>
+    </section>
+
+    <section class="user-guide-section" id="backups">
+      <h2>Back up or move your collection</h2>
+      <ul>
+        <li>
+          Choose <strong>Export Backup</strong> to download all records. To
+          export one owner's records, first select that owner in
+          <strong>Filter by owner</strong>, then choose
+          <strong>Export Selected Owner</strong>.
+        </li>
+        <li>
+          Keep the downloaded JSON backup somewhere safe. It contains your
+          records and album-art images; do not share it unless you intend to
+          share that information.
+        </li>
+        <li>
+          To load a backup on another device, transfer the file to that device,
+          choose it under <strong>Restore from backup file</strong>, review the
+          preview, and choose <strong>Restore backup</strong>.
+        </li>
+        <li>
+          Restore adds new records and updates records with matching IDs. It
+          does not delete records absent from the backup, and it skips records
+          whose contents already match.
+        </li>
+      </ul>
+    </section>
+
+    <section class="user-guide-section" id="install">
+      <h2>Add the app to a device</h2>
+      <p>
+        Adding the app to a home screen or desktop creates a shortcut to the
+        same website. It does not sync collections between devices.
+      </p>
+
+      <h3>iPhone or iPad</h3>
+      <ol>
+        <li>Open the app link in <strong>Safari</strong>.</li>
+        <li>Tap <strong>Share</strong> (the square with the upward arrow).</li>
+        <li>Choose <strong>Add to Home Screen</strong>.</li>
+        <li>
+          If offered, turn on <strong>Open as Web App</strong>, then tap
+          <strong>Add</strong>.
+        </li>
+        <li>Open the new icon from your Home Screen.</li>
+      </ol>
+
+      <h3>Android phone or tablet</h3>
+      <ol>
+        <li>Open the app link in <strong>Chrome</strong>.</li>
+        <li>Tap the three-dot menu.</li>
+        <li>
+          Choose <strong>Install app</strong> or
+          <strong>Add to Home screen</strong>, then confirm.
+        </li>
+        <li>Open the new icon from your Home Screen.</li>
+      </ol>
+      <p>
+        Menu wording varies by browser and device. If
+        <strong>Install app</strong> is not shown, choose
+        <strong>Add to Home screen</strong>.
+      </p>
+
+      <h3>Windows computer</h3>
+      <ul>
+        <li>
+          In Microsoft Edge, open the app menu and choose
+          <strong>Apps</strong> &gt;
+          <strong>Install this site as an app</strong>.
+        </li>
+        <li>
+          In Chrome, look for <strong>Install page as app</strong> or
+          <strong>Create shortcut</strong> in the browser menu.
+        </li>
+      </ul>
+
+      <h3>Mac</h3>
+      <ul>
+        <li>
+          In Safari on macOS Sonoma or newer, open the app and choose
+          <strong>File</strong> &gt; <strong>Add to Dock</strong>.
+        </li>
+        <li>
+          In Chrome, use the browser menu's
+          <strong>Install page as app</strong> option if available.
+        </li>
+      </ul>
+    </section>
+
+    <section class="user-guide-section" id="updates">
+      <h2>Updates and offline use</h2>
+      <p>
+        Open the app while online from time to time so it can receive updates.
+        If it looks out of date after an update, close the app completely and
+        reopen it while online.
+      </p>
+      <p>
+        After the first successful online visit, the app may remain available
+        offline. Keep a backup even if you use it offline.
+      </p>
+    </section>
+
+    <p><a href="./">Back to Analog Media Tracker</a></p>
+  </main>
+</body>
+</html>

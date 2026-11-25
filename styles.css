@@ -280,9 +280,103 @@ button:disabled {
 
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+a:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
+}
+
+.collection-actions .user-guide-link,
+.guide-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.85rem;
+  color: var(--button-text);
+  background: var(--button-accent);
+  border: 1px solid var(--button-accent);
+  border-radius: 0.6rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.collection-actions .user-guide-link:hover,
+.guide-back-link:hover {
+  color: var(--button-text);
+  background: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+.user-guide-page {
+  max-width: 980px;
+}
+
+.user-guide-content {
+  display: grid;
+  gap: 1rem;
+}
+
+.user-guide-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.user-guide-toc a {
+  padding: 0.35rem 0.65rem;
+  color: var(--text);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.user-guide-content a:not(.guide-back-link) {
+  color: var(--accent-hover);
+}
+
+.user-guide-section {
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  box-shadow: var(--shadow);
+}
+
+.user-guide-section h2 {
+  margin-top: 0;
+}
+
+.user-guide-section h3 {
+  margin-bottom: 0.35rem;
+}
+
+.user-guide-section li + li {
+  margin-top: 0.35rem;
+}
+
+.user-guide-callout {
+  padding: 0.85rem 1rem;
+  background: var(--surface-muted);
+  border-left: 4px solid var(--accent);
+  border-radius: 0.35rem;
+}
+
+a:focus-visible {
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 600px) {
+  .user-guide-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .user-guide-section {
+    padding: 1rem;
+  }
 }
 
 .track-row {
