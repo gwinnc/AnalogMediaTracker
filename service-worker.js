@@ -1,4 +1,4 @@
-const CACHE_NAME = "analog-media-tracker-v23";
+const CACHE_NAME = "analog-media-tracker-v24";
 
 const APP_FILES = [
   "./",

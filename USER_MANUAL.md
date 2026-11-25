@@ -4,6 +4,13 @@ Open the app at [https://gwinnc.github.io/AnalogMediaTracker/](https://gwinnc.gi
 
 For the phone-friendly version of this guide, visit [the User Guide page](https://gwinnc.github.io/AnalogMediaTracker/user-guide.html).
 
+## Get started
+
+1. Send your friend the [app link](https://gwinnc.github.io/AnalogMediaTracker/). They do not need a GitHub account or access to the repository.
+2. They open the link in a browser. They can use the app there, or follow the device instructions below to add an icon to their phone's Home Screen or computer.
+3. Send them the [User Guide](https://gwinnc.github.io/AnalogMediaTracker/user-guide.html), or point out the **User Guide** link inside the app.
+4. They can start adding records right away. Their collection is separate from yours and stays in their browser on their device.
+
 ## What the app stores
 
 The app keeps your collection in the browser on the device you are using. It does not require an account, and the app does not upload your collection to GitHub Pages or sync it with other people. Each person—and each browser or device—has a separate collection.
