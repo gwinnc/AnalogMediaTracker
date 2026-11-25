@@ -12,6 +12,10 @@ const genreFilter = document.querySelector("#genre-filter");
 const ownerFilter = document.querySelector("#owner-filter");
 const collectionSummary = document.querySelector("#collection-summary");
 const shoppingViewToggle = document.querySelector("#shopping-view-toggle");
+const tableViewToggle = document.querySelector("#table-view-toggle");
+const galleryViewToggle = document.querySelector("#gallery-view-toggle");
+const collectionTableView = document.querySelector("#collection-table-view");
+const collectionGallery = document.querySelector("#collection-gallery");
 const artistLetterNav = document.querySelector("#artist-letter-nav");
 const addRecordPanel = document.querySelector("#add-record-panel");
 const themeToggle = document.querySelector("#theme-toggle");
@@ -20,8 +24,14 @@ const themeModeStatus = document.querySelector("#theme-mode-status");
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
 const themePreferenceKey = "analog-media-tracker-theme";
+const undoDeleteNotice = document.querySelector("#undo-delete-notice");
+const undoDeleteMessage = document.querySelector("#undo-delete-message");
+const undoDeleteButton = document.querySelector("#undo-delete-button");
 
 let themePreference = "system";
+let undoDeleteAlbum = null;
+let undoDeleteTimer = null;
+let collectionViewMode = "table";
 
 try {
   const savedThemePreference = localStorage.getItem(themePreferenceKey);
@@ -76,6 +86,58 @@ systemTheme.addEventListener("change", () => {
     applyTheme("system");
   }
 });
+
+function showUndoDeleteNotice(album) {
+  if (undoDeleteTimer !== null) {
+    clearTimeout(undoDeleteTimer);
+  }
+
+  undoDeleteAlbum = album;
+  undoDeleteMessage.textContent =
+    `Deleted "${album.album}" by ${album.artist}.`;
+  undoDeleteNotice.hidden = false;
+  undoDeleteButton.disabled = false;
+  undoDeleteTimer = window.setTimeout(() => {
+    undoDeleteAlbum = null;
+    undoDeleteNotice.hidden = true;
+    undoDeleteTimer = null;
+  }, 10000);
+}
+
+undoDeleteButton.addEventListener("click", async () => {
+  const album = undoDeleteAlbum;
+  if (!album) {
+    return;
+  }
+
+  if (undoDeleteTimer !== null) {
+    clearTimeout(undoDeleteTimer);
+    undoDeleteTimer = null;
+  }
+  undoDeleteButton.disabled = true;
+
+  try {
+    await saveAlbum(album);
+  } catch (error) {
+    console.error("Could not undo record deletion:", error);
+    undoDeleteButton.disabled = false;
+    showUndoDeleteNotice(album);
+    alert("The deleted record could not be restored. Please try again.");
+    return;
+  }
+
+  undoDeleteAlbum = null;
+  undoDeleteNotice.hidden = true;
+  undoDeleteButton.disabled = false;
+
+  try {
+    await renderAlbums();
+  } catch (error) {
+    console.error("Could not refresh the collection after undo:", error);
+    alert("The record was restored, but the collection could not be refreshed.");
+  }
+});
+
 
 let editingAlbumId = null;
 
@@ -408,7 +470,11 @@ function getArtistInitial(artist) {
 function updateArtistLetterNav(albums, sortMode) {
   artistLetterNav.replaceChildren();
 
-  if (sortMode !== "artist-asc" || albums.length === 0) {
+  if (
+    collectionViewMode !== "table" ||
+    sortMode !== "artist-asc" ||
+    albums.length === 0
+  ) {
     artistLetterNav.hidden = true;
     return;
   }
@@ -439,6 +505,205 @@ function updateArtistLetterNav(albums, sortMode) {
   }
 
   artistLetterNav.hidden = false;
+}
+
+function openAlbumImageViewer(images, initialIndex = 0) {
+  let currentIndex = initialIndex;
+
+  const dialog = document.createElement("dialog");
+  dialog.className = "album-art-viewer";
+  dialog.setAttribute("aria-label", "Album art viewer");
+
+  const controls = document.createElement("div");
+  controls.className = "album-art-viewer-controls";
+
+  const previousButton = document.createElement("button");
+  previousButton.type = "button";
+  previousButton.textContent = "Previous";
+
+  const imageCount = document.createElement("span");
+
+  const nextButton = document.createElement("button");
+  nextButton.type = "button";
+  nextButton.textContent = "Next";
+
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.textContent = "Close";
+
+  const largeImage = document.createElement("img");
+  largeImage.className = "album-art-viewer-image";
+
+  function showCurrentImage() {
+    const image = images[currentIndex];
+    largeImage.src = image.data;
+    largeImage.alt = image.name;
+    imageCount.textContent = `${currentIndex + 1} of ${images.length}`;
+    previousButton.disabled = currentIndex === 0;
+    nextButton.disabled = currentIndex === images.length - 1;
+  }
+
+  previousButton.addEventListener("click", () => {
+    if (currentIndex > 0) {
+      currentIndex -= 1;
+      showCurrentImage();
+    }
+  });
+
+  nextButton.addEventListener("click", () => {
+    if (currentIndex < images.length - 1) {
+      currentIndex += 1;
+      showCurrentImage();
+    }
+  });
+
+  closeButton.addEventListener("click", () => dialog.close());
+  controls.append(previousButton, imageCount, nextButton, closeButton);
+  dialog.append(controls, largeImage);
+  document.body.appendChild(dialog);
+
+  dialog.addEventListener("close", () => dialog.remove(), { once: true });
+  showCurrentImage();
+  dialog.showModal();
+}
+
+function renderAlbumGallery(albums, searchTerm) {
+  collectionGallery.replaceChildren();
+
+  if (albums.length === 0) {
+    const emptyMessage = document.createElement("p");
+    emptyMessage.className = "collection-gallery-empty";
+    emptyMessage.textContent = searchTerm
+      ? "No records match your search."
+      : "Your collection is empty.";
+    collectionGallery.appendChild(emptyMessage);
+    return;
+  }
+
+  for (const album of albums) {
+    const card = document.createElement("article");
+    card.className = "album-gallery-card";
+    card.setAttribute("role", "listitem");
+
+    const albumImages = Array.isArray(album.images) ? album.images : [];
+    const coverData = albumImages[0]?.data;
+
+    if (coverData) {
+      const coverButton = document.createElement("button");
+      coverButton.type = "button";
+      coverButton.className = "album-gallery-cover-button";
+      coverButton.setAttribute(
+        "aria-label",
+        `View cover art for ${album.album || "album"}`
+      );
+
+      const coverImage = document.createElement("img");
+      coverImage.src = coverData;
+      coverImage.alt = `Cover art for ${album.album || "album"}`;
+      coverImage.loading = "lazy";
+      coverButton.appendChild(coverImage);
+      coverButton.addEventListener("click", () => {
+        openAlbumImageViewer(albumImages);
+      });
+      card.appendChild(coverButton);
+    } else {
+      const coverPlaceholder = document.createElement("div");
+      coverPlaceholder.className = "album-gallery-cover-placeholder";
+      coverPlaceholder.setAttribute("role", "img");
+      coverPlaceholder.setAttribute("aria-label", "No cover art");
+      coverPlaceholder.textContent = "No cover art";
+      card.appendChild(coverPlaceholder);
+    }
+
+    const content = document.createElement("div");
+    content.className = "album-gallery-content";
+
+    const title = document.createElement("h3");
+    title.textContent = album.album || "Untitled album";
+
+    const artist = document.createElement("p");
+    artist.className = "album-gallery-artist";
+    artist.textContent = album.artist || "Unknown artist";
+    content.append(title, artist);
+
+    if (album.needsReplacement) {
+      const replacementBadge = document.createElement("span");
+      replacementBadge.className = "album-gallery-badge";
+      replacementBadge.textContent = "Needs replacement";
+      content.appendChild(replacementBadge);
+    }
+
+    const metadata = [
+      ["Pressing year", album.pressingYear],
+      ["Genre", album.genre],
+      ["Condition", album.vinylCondition || album.condition],
+      ["Owner", album.owner]
+    ].filter(([, value]) => value);
+
+    if (metadata.length > 0) {
+      const metadataList = document.createElement("dl");
+      metadataList.className = "album-gallery-metadata";
+
+      for (const [label, value] of metadata) {
+        const term = document.createElement("dt");
+        term.textContent = label;
+        const description = document.createElement("dd");
+        description.textContent = value;
+        metadataList.append(term, description);
+      }
+
+      content.appendChild(metadataList);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "album-gallery-actions";
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "album-gallery-edit";
+    editButton.textContent = "View / Edit";
+    editButton.addEventListener("click", () => loadAlbumForEditing(album));
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "album-gallery-delete";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => {
+      deleteAlbumFromCollection(album);
+    });
+
+    actions.append(editButton, deleteButton);
+    content.appendChild(actions);
+    card.appendChild(content);
+    collectionGallery.appendChild(card);
+  }
+}
+
+async function deleteAlbumFromCollection(album) {
+  const confirmed = window.confirm(
+    `Delete "${album.album}" by ${album.artist}? You can undo this for 10 seconds.`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await deleteAlbum(album.id);
+  } catch (error) {
+    console.error("Could not delete record:", error);
+    alert("The record could not be deleted. Please try again.");
+    return;
+  }
+
+  showUndoDeleteNotice(album);
+
+  try {
+    await renderAlbums();
+  } catch (error) {
+    console.error("Could not refresh the collection after deletion:", error);
+    alert("The record was deleted, but the collection could not be refreshed.");
+  }
 }
 
 async function renderAlbums() {
@@ -523,6 +788,7 @@ async function renderAlbums() {
     compareAlbums(first, second, sortMode)
   );
   updateArtistLetterNav(matchingAlbums, sortMode);
+  renderAlbumGallery(matchingAlbums, searchTerm);
   tableBody.replaceChildren();
 
   if (matchingAlbums.length === 0) {
@@ -542,6 +808,7 @@ async function renderAlbums() {
   for (const album of matchingAlbums) {
     const row = document.createElement("tr");
     row.dataset.artistInitial = getArtistInitial(album.artist);
+    row.dataset.albumId = album.id;
     addCell(row, album.artist);
     const albumCell = document.createElement("td");
     const albumContent = document.createElement("div");
@@ -570,72 +837,7 @@ if (coverData) {
   coverButton.appendChild(coverImage);
 
   coverButton.addEventListener("click", () => {
-    let currentIndex = 0;
-
-    const dialog = document.createElement("dialog");
-    dialog.setAttribute("aria-label", "Album art viewer");
-    dialog.style.padding = "1rem";
-    dialog.style.maxWidth = "90vw";
-    dialog.style.maxHeight = "90vh";
-
-    const controls = document.createElement("div");
-    controls.style.display = "flex";
-    controls.style.gap = "0.5rem";
-    controls.style.alignItems = "center";
-
-    const previousButton = document.createElement("button");
-    previousButton.type = "button";
-    previousButton.textContent = "Previous";
-
-    const imageCount = document.createElement("span");
-
-    const nextButton = document.createElement("button");
-    nextButton.type = "button";
-    nextButton.textContent = "Next";
-
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.textContent = "Close";
-
-    const largeImage = document.createElement("img");
-    largeImage.style.display = "block";
-    largeImage.style.maxWidth = "85vw";
-    largeImage.style.maxHeight = "80vh";
-    largeImage.style.objectFit = "contain";
-    largeImage.style.marginTop = "0.75rem";
-
-    function showCurrentImage() {
-      const image = albumImages[currentIndex];
-      largeImage.src = image.data;
-      largeImage.alt = image.name;
-      imageCount.textContent = `${currentIndex + 1} of ${albumImages.length}`;
-      previousButton.disabled = currentIndex === 0;
-      nextButton.disabled = currentIndex === albumImages.length - 1;
-    }
-
-    previousButton.addEventListener("click", () => {
-      if (currentIndex > 0) {
-        currentIndex -= 1;
-        showCurrentImage();
-      }
-    });
-
-    nextButton.addEventListener("click", () => {
-      if (currentIndex < albumImages.length - 1) {
-        currentIndex += 1;
-        showCurrentImage();
-      }
-    });
-
-    closeButton.addEventListener("click", () => dialog.close());
-
-    controls.append(previousButton, imageCount, nextButton, closeButton);
-    dialog.append(controls, largeImage);
-    document.body.appendChild(dialog);
-
-    dialog.addEventListener("close", () => dialog.remove(), { once: true });
-    showCurrentImage();
-    dialog.showModal();
+    openAlbumImageViewer(albumImages);
   });
 
   albumContent.appendChild(coverButton);
@@ -732,22 +934,8 @@ if (coverData) {
       const deleteButton = document.createElement("button");
       deleteButton.type = "button";
       deleteButton.textContent = "Delete";
-      deleteButton.addEventListener("click", async () => {
-        const confirmed = window.confirm(
-          `Delete "${album.album}" by ${album.artist}? This cannot be undone.`
-        );
-
-        if (!confirmed) {
-          return;
-        }
-
-        try {
-          await deleteAlbum(album.id);
-          await renderAlbums();
-        } catch (error) {
-          console.error("Could not delete record:", error);
-          alert("The record could not be deleted. Please try again.");
-        }
+      deleteButton.addEventListener("click", () => {
+        deleteAlbumFromCollection(album);
       });
 
     actionsCell.append(editButton, " ", deleteButton);
@@ -934,77 +1122,7 @@ function renderAlbumImagePreview(images) {
     });
 
     thumbnailButton.addEventListener("click", () => {
-      let currentIndex = imageIndex;
-
-      const dialog = document.createElement("dialog");
-      dialog.setAttribute("aria-label", "Album art viewer");
-      dialog.style.padding = "1rem";
-      dialog.style.maxWidth = "90vw";
-      dialog.style.maxHeight = "90vh";
-
-      const controls = document.createElement("div");
-      controls.style.display = "flex";
-      controls.style.gap = "0.5rem";
-      controls.style.alignItems = "center";
-
-      const previousButton = document.createElement("button");
-      previousButton.type = "button";
-      previousButton.textContent = "Previous";
-
-      const nextButton = document.createElement("button");
-      nextButton.type = "button";
-      nextButton.textContent = "Next";
-
-      const closeButton = document.createElement("button");
-      closeButton.type = "button";
-      closeButton.textContent = "Close";
-
-      const imageCount = document.createElement("span");
-
-      const largeImage = document.createElement("img");
-      largeImage.style.display = "block";
-      largeImage.style.maxWidth = "85vw";
-      largeImage.style.maxHeight = "80vh";
-      largeImage.style.objectFit = "contain";
-      largeImage.style.marginTop = "0.75rem";
-
-      function showCurrentImage() {
-        const currentImage = images[currentIndex];
-        largeImage.src = currentImage.data;
-        largeImage.alt = currentImage.name;
-        imageCount.textContent = `${currentIndex + 1} of ${images.length}`;
-        previousButton.disabled = currentIndex === 0;
-        nextButton.disabled = currentIndex === images.length - 1;
-      }
-
-      previousButton.addEventListener("click", () => {
-        if (currentIndex > 0) {
-          currentIndex -= 1;
-          showCurrentImage();
-        }
-      });
-
-      nextButton.addEventListener("click", () => {
-        if (currentIndex < images.length - 1) {
-          currentIndex += 1;
-          showCurrentImage();
-        }
-      });
-
-      closeButton.addEventListener("click", () => dialog.close());
-
-      controls.append(
-        previousButton,
-        imageCount,
-        nextButton,
-        closeButton
-      );
-      dialog.append(controls, largeImage);
-      document.body.appendChild(dialog);
-
-      dialog.addEventListener("close", () => dialog.remove(), { once: true });
-      showCurrentImage();
-      dialog.showModal();
+      openAlbumImageViewer(images, imageIndex);
     });
 
     const thumbnailItem = document.createElement("div");
@@ -1184,6 +1302,24 @@ ownerFilter.addEventListener("change", () => {
     console.error("Could not filter by owner:", error);
   });
 });
+
+function setCollectionView(mode) {
+  collectionViewMode = mode;
+  const isGalleryView = mode === "gallery";
+
+  collectionTableView.hidden = isGalleryView;
+  collectionGallery.hidden = !isGalleryView;
+  shoppingViewToggle.hidden = isGalleryView;
+  tableViewToggle.setAttribute("aria-pressed", String(!isGalleryView));
+  galleryViewToggle.setAttribute("aria-pressed", String(isGalleryView));
+
+  renderAlbums().catch((error) => {
+    console.error("Could not change collection view:", error);
+  });
+}
+
+tableViewToggle.addEventListener("click", () => setCollectionView("table"));
+galleryViewToggle.addEventListener("click", () => setCollectionView("gallery"));
 
 shoppingViewToggle.addEventListener("click", () => {
   const tableWrapper = tableBody.closest(".table-wrapper");

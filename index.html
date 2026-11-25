@@ -46,6 +46,11 @@
       <button type="button" id="export-owner-backup-button">Export Selected Owner</button>
     </div>
 
+    <div class="collection-view-toggle" role="group" aria-label="Collection view">
+      <button type="button" id="table-view-toggle" aria-pressed="true">Table</button>
+      <button type="button" id="gallery-view-toggle" aria-pressed="false">Gallery</button>
+    </div>
+
     <div class="filter-field">
       <label for="restore-backup-file">Restore from backup file</label>
       <input
@@ -103,7 +108,7 @@
     </button>
   </div>
 
-  <div class="table-wrapper">
+  <div id="collection-table-view" class="table-wrapper">
     <div class="table-scroll">
       <table>
         <thead>
@@ -131,6 +136,8 @@
     </div>
     <nav id="artist-letter-nav" aria-label="Jump to artist" hidden></nav>
   </div>
+
+  <div id="collection-gallery" class="collection-gallery" role="list" aria-label="Album gallery" hidden></div>
 
   </section>
   <details id="add-record-panel">
@@ -244,6 +251,32 @@
 
   </section>
 </details>
+
+<dialog id="restore-preview-dialog" class="app-dialog" aria-labelledby="restore-preview-title">
+  <div class="restore-preview-content">
+    <h2 id="restore-preview-title">Review backup restore</h2>
+    <p id="restore-preview-file"></p>
+    <ul class="restore-preview-list">
+      <li id="restore-preview-additions"></li>
+      <li id="restore-preview-updates"></li>
+      <li id="restore-preview-skips"></li>
+    </ul>
+    <p class="dialog-note">
+      Existing albums with matching IDs will be replaced by backup versions.
+      Albums missing from this backup will remain in your collection.
+    </p>
+    <form method="dialog" class="dialog-actions">
+      <button value="cancel">Cancel</button>
+      <button value="restore">Restore backup</button>
+    </form>
+  </div>
+</dialog>
+
+<div id="undo-delete-notice" class="undo-delete-notice" role="status" aria-live="polite" hidden>
+  <span id="undo-delete-message"></span>
+  <button type="button" id="undo-delete-button">Undo</button>
+</div>
+
 <button type="button" id="back-to-top-button" hidden>Back to top</button>
 
 

@@ -3,6 +3,11 @@ const exportOwnerBackupButton = document.getElementById("export-owner-backup-but
 const backupOwnerFilter = document.getElementById("owner-filter");
 
 const restoreBackupFile = document.getElementById("restore-backup-file");
+const restorePreviewDialog = document.getElementById("restore-preview-dialog");
+const restorePreviewFile = document.getElementById("restore-preview-file");
+const restorePreviewAdditions = document.getElementById("restore-preview-additions");
+const restorePreviewUpdates = document.getElementById("restore-preview-updates");
+const restorePreviewSkips = document.getElementById("restore-preview-skips");
 
 function isValidTrack(track) {
   return (
@@ -130,6 +135,69 @@ function albumSignature(album) {
   });
 }
 
+function createBackupRestorePlan(backupAlbums, existingAlbums) {
+  const knownAlbums = [...existingAlbums];
+  const indexById = new Map(
+    existingAlbums.map((album, index) => [album.id, index])
+  );
+  const operations = [];
+  let importedCount = 0;
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  for (const originalAlbum of backupAlbums) {
+    const album = {
+      ...originalAlbum,
+      tracks: originalAlbum.tracks.map((track) => ({ ...track }))
+    };
+
+    const existingIndex = indexById.get(album.id);
+
+    if (existingIndex !== undefined) {
+      operations.push(album);
+      knownAlbums[existingIndex] = album;
+      updatedCount += 1;
+      continue;
+    }
+
+    const matchingContent = knownAlbums.some(
+      (existingAlbum) =>
+        albumSignature(existingAlbum) === albumSignature(album)
+    );
+
+    if (matchingContent) {
+      skippedCount += 1;
+      continue;
+    }
+
+    operations.push(album);
+    indexById.set(album.id, knownAlbums.length);
+    knownAlbums.push(album);
+    importedCount += 1;
+  }
+
+  return { operations, importedCount, updatedCount, skippedCount };
+}
+
+function confirmBackupRestore(file, plan) {
+  restorePreviewFile.textContent = file.name;
+  restorePreviewAdditions.textContent =
+    `Add: ${plan.importedCount} album(s)`;
+  restorePreviewUpdates.textContent =
+    `Replace existing: ${plan.updatedCount} album(s) with matching IDs`;
+  restorePreviewSkips.textContent =
+    `Skip: ${plan.skippedCount} album(s) with matching content`;
+
+  return new Promise((resolve) => {
+    restorePreviewDialog.addEventListener(
+      "close",
+      () => resolve(restorePreviewDialog.returnValue === "restore"),
+      { once: true }
+    );
+    restorePreviewDialog.showModal();
+  });
+}
+
 restoreBackupFile.addEventListener("change", async () => {
   const file = restoreBackupFile.files[0];
 
@@ -158,64 +226,23 @@ restoreBackupFile.addEventListener("change", async () => {
       return;
     }
 
-        const confirmed = window.confirm(
-      `Import ${backup.albums.length} album(s)? ` +
-      "New albums will be added. Albums with matching IDs will be updated " +
-      "from this backup. Albums with matching content but different IDs " +
-      "will be skipped. Albums missing from the backup will not be deleted. " +
-      "If both devices have edits to the same album, the backup version will replace them."
-    );
+    const existingAlbums = await getAlbums();
+    const plan = createBackupRestorePlan(backup.albums, existingAlbums);
+    const confirmed = await confirmBackupRestore(file, plan);
 
     if (!confirmed) {
       return;
     }
 
-    const existingAlbums = await getAlbums();
-    const knownAlbums = [...existingAlbums];
-    const indexById = new Map(
-      existingAlbums.map((album, index) => [album.id, index])
-    );
-
-    let importedCount = 0;
-    let updatedCount = 0;
-    let skippedCount = 0;
-
-    for (const originalAlbum of backup.albums) {
-      const album = {
-        ...originalAlbum,
-        tracks: originalAlbum.tracks.map((track) => ({ ...track }))
-      };
-
-      const existingIndex = indexById.get(album.id);
-
-      if (existingIndex !== undefined) {
-        await saveAlbum(album);
-        knownAlbums[existingIndex] = album;
-        updatedCount += 1;
-        continue;
-      }
-
-      const matchingContent = knownAlbums.some(
-        (existingAlbum) =>
-          albumSignature(existingAlbum) === albumSignature(album)
-      );
-
-      if (matchingContent) {
-        skippedCount += 1;
-        continue;
-      }
-
+    for (const album of plan.operations) {
       await saveAlbum(album);
-      indexById.set(album.id, knownAlbums.length);
-      knownAlbums.push(album);
-      importedCount += 1;
     }
 
     await renderAlbums();
 
     alert(
-      `Added ${importedCount} album(s), updated or re-saved ${updatedCount}, ` +
-      `and skipped ${skippedCount} album(s) with matching content.`
+      `Added ${plan.importedCount} album(s), updated or re-saved ${plan.updatedCount}, ` +
+      `and skipped ${plan.skippedCount} album(s) with matching content.`
     );
 
 
