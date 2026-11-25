@@ -14,7 +14,68 @@ const collectionSummary = document.querySelector("#collection-summary");
 const shoppingViewToggle = document.querySelector("#shopping-view-toggle");
 const artistLetterNav = document.querySelector("#artist-letter-nav");
 const addRecordPanel = document.querySelector("#add-record-panel");
+const themeToggle = document.querySelector("#theme-toggle");
+const themeSystemButton = document.querySelector("#theme-system-button");
+const themeModeStatus = document.querySelector("#theme-mode-status");
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+const themePreferenceKey = "analog-media-tracker-theme";
 
+let themePreference = "system";
+
+try {
+  const savedThemePreference = localStorage.getItem(themePreferenceKey);
+  if (savedThemePreference === "light" || savedThemePreference === "dark") {
+    themePreference = savedThemePreference;
+  }
+} catch (error) {
+  console.error("Could not read the saved theme preference:", error);
+}
+
+function applyTheme(preference, persist = false) {
+  themePreference = preference;
+  const isDark =
+    preference === "system" ? systemTheme.matches : preference === "dark";
+
+  document.documentElement.dataset.theme = isDark ? "dark" : "light";
+  themeToggle.checked = isDark;
+  themeSystemButton.disabled = preference === "system";
+  themeModeStatus.textContent =
+    preference === "system"
+      ? `Using system theme (${isDark ? "dark" : "light"})`
+      : `${isDark ? "Dark" : "Light"} theme selected`;
+  themeColorMeta.content = isDark ? "#151311" : "#f5f1e8";
+
+  if (persist) {
+    try {
+      if (preference === "system") {
+        localStorage.removeItem(themePreferenceKey);
+      } else {
+        localStorage.setItem(themePreferenceKey, preference);
+      }
+    } catch (error) {
+      console.error("Could not save the theme preference:", error);
+      themeModeStatus.textContent =
+        "Theme changed, but the preference could not be saved.";
+    }
+  }
+}
+
+applyTheme(themePreference);
+
+themeToggle.addEventListener("change", () => {
+  applyTheme(themeToggle.checked ? "dark" : "light", true);
+});
+
+themeSystemButton.addEventListener("click", () => {
+  applyTheme("system", true);
+});
+
+systemTheme.addEventListener("change", () => {
+  if (themePreference === "system") {
+    applyTheme("system");
+  }
+});
 
 let editingAlbumId = null;
 

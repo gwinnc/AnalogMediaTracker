@@ -14,60 +14,94 @@
     <title>Analog Media Tracker</title>
 </head>
 <body>
-    
+<header class="app-header">
+  <div class="app-heading">
+    <p class="app-eyebrow">YOUR VINYL LIBRARY</p>
+    <h1>Analog Media Tracker</h1>
+    <p class="app-subtitle">Keep your collection organized.</p>
+  </div>
+  <div class="theme-settings">
+    <label class="theme-toggle" for="theme-toggle">
+      <span>Dark mode</span>
+      <input id="theme-toggle" type="checkbox" role="switch">
+      <span class="theme-switch-track" aria-hidden="true">
+        <span class="theme-switch-thumb"></span>
+      </span>
+    </label>
+    <div class="theme-system-setting">
+      <span id="theme-mode-status" aria-live="polite">Using system theme</span>
+      <button type="button" id="theme-system-button">Use system</button>
+    </div>
+  </div>
+</header>
+
 <section aria-labelledby="collection-heading">
   <h2 id="collection-heading">My Collection</h2>
   <p id="collection-summary" aria-live="polite"></p>
   <p id="collection-stats" aria-live="polite"></p>
 
-  <!-- Your export, restore, sort, and search controls go here -->
-    <button type="button" id="export-backup-button">Export Backup</button>
-    <button type="button" id="export-owner-backup-button">Export Selected Owner</button>
+  <div class="collection-controls">
+    <div class="collection-actions">
+      <button type="button" id="export-backup-button">Export Backup</button>
+      <button type="button" id="export-owner-backup-button">Export Selected Owner</button>
+    </div>
 
-    <label for="restore-backup-file">Restore from backup file</label>
-  <input
-    type="file"
-    id="restore-backup-file"
-    accept=".json,application/json">
+    <div class="filter-field">
+      <label for="restore-backup-file">Restore from backup file</label>
+      <input
+        type="file"
+        id="restore-backup-file"
+        accept=".json,application/json">
+    </div>
 
-    <label for="collection-sort">Sort by</label>
+    <div class="filter-field">
+      <label for="collection-sort">Sort by</label>
+      <select id="collection-sort">
+        <option value="artist-asc">Artist (A–Z)</option>
+        <option value="album-asc">Album (A–Z)</option>
+        <option value="year-desc">Pressing year (newest first)</option>
+        <option value="year-asc">Pressing year (oldest first)</option>
+        <option value="genre-asc">Genre (A–Z)</option>
+        <option value="created-desc">Recently added</option>
+        <option value="updated-desc">Recently edited</option>
+      </select>
+    </div>
 
-  <select id="collection-sort">
-    <option value="artist-asc">Artist (A–Z)</option>
-    <option value="album-asc">Album (A–Z)</option>
-    <option value="year-desc">Pressing year (newest first)</option>
-    <option value="year-asc">Pressing year (oldest first)</option>
-    <option value="genre-asc">Genre (A–Z)</option>
-    <option value="created-desc">Recently added</option>
-    <option value="updated-desc">Recently edited</option>
+    <div class="filter-field">
+      <label for="genre-filter">Filter by genre</label>
+      <select id="genre-filter">
+        <option value="">All genres</option>
+      </select>
+    </div>
 
+    <div class="filter-field">
+      <label for="owner-filter">Filter by owner</label>
+      <select id="owner-filter">
+        <option value="">All owners</option>
+      </select>
+    </div>
 
-  </select>
-  <label for="genre-filter">Filter by genre</label>
-  <select id="genre-filter">
-    <option value="">All genres</option>
-  </select>
+    <div class="filter-field">
+      <label for="collection-search">Search your collection</label>
+      <input
+        id="collection-search"
+        type="search"
+        placeholder="Search artist, album, track, or issue"
+      >
+    </div>
 
-  <label for="owner-filter">Filter by owner</label>
-  <select id="owner-filter">
-    <option value="">All owners</option>
-  </select>
+    <div class="filter-field">
+      <label for="replacement-filter">Replacement filter</label>
+      <select id="replacement-filter">
+        <option value="all">Show all albums</option>
+        <option value="needed">Needs replacement</option>
+      </select>
+    </div>
 
-  <label for="collection-search">Search your collection</label>
-  <input
-    id="collection-search"
-    type="search"
-    placeholder="Search artist, album, track, or issue"
-  >
-  <label for="replacement-filter">Replacement filter</label>
-  <select id="replacement-filter">
-    <option value="all">Show all albums</option>
-    <option value="needed">Needs replacement</option>
-  </select>
-
-      <button type="button" id="shopping-view-toggle" aria-pressed="false">
-        Shopping view
-      </button>
+    <button type="button" id="shopping-view-toggle" aria-pressed="false">
+      Shopping view
+    </button>
+  </div>
 
   <div class="table-wrapper">
     <div class="table-scroll">
