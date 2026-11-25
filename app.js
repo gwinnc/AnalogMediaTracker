@@ -123,6 +123,14 @@ function addCell(row, text) {
   row.appendChild(cell);
 }
 
+function toTitleCase(text) {
+  return text
+    .toLocaleLowerCase()
+    .replace(/(^|[\s-])([\p{L}\p{N}])/gu, (_, boundary, character) =>
+      boundary + character.toLocaleUpperCase()
+    );
+}
+
 function getTrackData() {
   return [...trackList.querySelectorAll(".track-row")]
     .map((row) => {
@@ -132,12 +140,26 @@ function getTrackData() {
       return {
         side: value("side").toUpperCase(),
         trackNumber: value("trackNumber"),
-        title: value("title"),
+        title: toTitleCase(value("title")),
         issue: value("issue")
       };
     })
-    .filter((track) => track.title || track.issue);
+    .filter((track) => track.title || track.issue)
+    .sort((first, second) => {
+      const sideOrder = first.side.localeCompare(second.side, undefined, {
+        sensitivity: "base",
+        numeric: true
+      });
+
+      if (sideOrder !== 0) return sideOrder;
+
+      return first.trackNumber.localeCompare(second.trackNumber, undefined, {
+        numeric: true
+      });
+    });
+
 }
+
 
 function summarizeIssues(tracks = []) {
   return tracks
@@ -242,6 +264,9 @@ function albumMatchesFilters(album, searchTerm, selectedGenre, selectedOwner) {
   return matchesSearch && matchesReplacement && matchesGenre && matchesOwner;
 }
 
+function getArtistSortName(artist) {
+  return (artist || "").trim().replace(/^the\s+/i, "");
+}
 
 function compareAlbums(first, second, sortMode) {
       if (sortMode === "updated-desc") {
@@ -302,15 +327,22 @@ function compareAlbums(first, second, sortMode) {
         : firstYear - secondYear;
     }
 
-    return (first.artist || "").localeCompare(second.artist || "", undefined, {
+    return getArtistSortName(first.artist).localeCompare(
+    getArtistSortName(second.artist),
+    undefined,
+    {
       sensitivity: "base",
       numeric: true
-    });
+    }
+  );
+
 }
 function getArtistInitial(artist) {
-  const initial = (artist || "").trim().charAt(0).toLocaleUpperCase();
+  const name = (artist || "").trim().replace(/^the\s+/i, "");
+  const initial = name.charAt(0).toLocaleUpperCase();
   return /^[A-Z]$/.test(initial) ? initial : "#";
 }
+
 
 function updateArtistLetterNav(albums, sortMode) {
   artistLetterNav.replaceChildren();
@@ -450,9 +482,157 @@ async function renderAlbums() {
     const row = document.createElement("tr");
     row.dataset.artistInitial = getArtistInitial(album.artist);
     addCell(row, album.artist);
-    addCell(row, album.album);
+    const albumCell = document.createElement("td");
+    const albumContent = document.createElement("div");
+    albumContent.className = "album-cell-content";
+
+    const albumImages = album.images ?? [];
+const coverData = albumImages[0]?.data;
+
+if (coverData) {
+  const coverButton = document.createElement("button");
+  coverButton.type = "button";
+  coverButton.setAttribute("aria-label", `View cover art for ${album.album || "album"}`);
+  coverButton.style.padding = "0";
+  coverButton.style.border = "0";
+  coverButton.style.background = "transparent";
+  coverButton.style.cursor = "pointer";
+
+  const coverImage = document.createElement("img");
+  coverImage.src = coverData;
+  coverImage.alt = `Cover art for ${album.album || "album"}`;
+  coverImage.width = 56;
+  coverImage.height = 56;
+  coverImage.loading = "lazy";
+  coverImage.style.objectFit = "cover";
+
+  coverButton.appendChild(coverImage);
+
+  coverButton.addEventListener("click", () => {
+    let currentIndex = 0;
+
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("aria-label", "Album art viewer");
+    dialog.style.padding = "1rem";
+    dialog.style.maxWidth = "90vw";
+    dialog.style.maxHeight = "90vh";
+
+    const controls = document.createElement("div");
+    controls.style.display = "flex";
+    controls.style.gap = "0.5rem";
+    controls.style.alignItems = "center";
+
+    const previousButton = document.createElement("button");
+    previousButton.type = "button";
+    previousButton.textContent = "Previous";
+
+    const imageCount = document.createElement("span");
+
+    const nextButton = document.createElement("button");
+    nextButton.type = "button";
+    nextButton.textContent = "Next";
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.textContent = "Close";
+
+    const largeImage = document.createElement("img");
+    largeImage.style.display = "block";
+    largeImage.style.maxWidth = "85vw";
+    largeImage.style.maxHeight = "80vh";
+    largeImage.style.objectFit = "contain";
+    largeImage.style.marginTop = "0.75rem";
+
+    function showCurrentImage() {
+      const image = albumImages[currentIndex];
+      largeImage.src = image.data;
+      largeImage.alt = image.name;
+      imageCount.textContent = `${currentIndex + 1} of ${albumImages.length}`;
+      previousButton.disabled = currentIndex === 0;
+      nextButton.disabled = currentIndex === albumImages.length - 1;
+    }
+
+    previousButton.addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex -= 1;
+        showCurrentImage();
+      }
+    });
+
+    nextButton.addEventListener("click", () => {
+      if (currentIndex < albumImages.length - 1) {
+        currentIndex += 1;
+        showCurrentImage();
+      }
+    });
+
+    closeButton.addEventListener("click", () => dialog.close());
+
+    controls.append(previousButton, imageCount, nextButton, closeButton);
+    dialog.append(controls, largeImage);
+    document.body.appendChild(dialog);
+
+    dialog.addEventListener("close", () => dialog.remove(), { once: true });
+    showCurrentImage();
+    dialog.showModal();
+  });
+
+  albumContent.appendChild(coverButton);
+}
+
+
+    const albumTitle = document.createElement("span");
+    albumTitle.textContent = album.album || "—";
+    albumContent.appendChild(albumTitle);
+
+    albumCell.appendChild(albumContent);
+    row.appendChild(albumCell);
+
     addCell(row, album.needsReplacement ? "Needs replacement" : "No");
-    addCell(row, summarizeIssues(album.tracks || []));
+    const tracks = album.tracks || [];
+    const trackCell = document.createElement("td");
+    const issueCount = tracks.filter(
+    (track) => track.issue && track.issue.trim().toLowerCase() !== "none"
+    ).length;
+
+    trackCell.textContent =
+      issueCount === 0
+        ? "No issues"
+        : `${issueCount} track${issueCount === 1 ? "" : "s"} with issues`;
+
+
+    if (tracks.length > 0) {
+      const trackDetails = document.createElement("details");
+      const trackSummary = document.createElement("summary");
+      trackSummary.textContent = `Show tracks (${tracks.length})`;
+
+      const trackItems = document.createElement("ul");
+
+      for (const track of tracks) {
+        const item = document.createElement("li");
+        const location = [
+          track.side ? `Side ${track.side}` : "",
+          track.trackNumber ? `Track ${track.trackNumber}` : "",
+          track.title || ""
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        const hasIssue =
+          track.issue && track.issue.trim().toLowerCase() !== "none";
+
+        item.textContent = hasIssue
+          ? `${location} — Issue: ${track.issue}`
+          : location || "Track details not recorded";
+
+        trackItems.appendChild(item);
+      }
+
+      trackDetails.append(trackSummary, trackItems);
+      trackCell.appendChild(trackDetails);
+    }
+
+    row.appendChild(trackCell);
     addCell(row, album.vinylCondition || album.condition);
     addCell(row, album.sleeveCondition);
     addCell(row, album.genre);
@@ -518,6 +698,11 @@ async function renderAlbums() {
 
 function loadAlbumForEditing(album) {
   editingAlbumId = album.id;
+  albumImageInput.value = "";
+  pendingAlbumImages = [];
+  albumImagePreview.replaceChildren();
+  editingAlbumImages = Array.isArray(album.images) ? album.images : [];
+  renderAlbumImagePreview(editingAlbumImages);
   addRecordPanel.open = true;
   form.elements.artist.value = album.artist || "";
   form.elements.album.value = album.album || "";
@@ -550,26 +735,234 @@ function loadAlbumForEditing(album) {
   form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function resetFormForNewAlbum() {
+function resetFormForNewAlbum(keepPanelOpen = false) {
   editingAlbumId = null;
-  addRecordPanel.open = false;
+
+  if (!keepPanelOpen) {
+    addRecordPanel.open = false;
+  }
+
   form.reset();
+  albumImageInput.value = "";
+  pendingAlbumImages = [];
+  editingAlbumImages = [];
+  albumImagePreview.replaceChildren();
   trackList.replaceChildren(createTrackRow());
   saveButton.textContent = "Save Record";
   cancelEditButton.hidden = true;
   formHeading.textContent = "Add a Record";
 }
 
+addRecordPanel.addEventListener("toggle", () => {
+  if (addRecordPanel.open && editingAlbumId === null) {
+    resetFormForNewAlbum(true);
+  }
+});
+
 addTrackButton.addEventListener("click", () => {
   trackList.appendChild(createTrackRow());
 });
 
-cancelEditButton.addEventListener("click", resetFormForNewAlbum);
+cancelEditButton.addEventListener("click", () => {
+  resetFormForNewAlbum();
+});
+
 
 const albumImageInput = document.getElementById("album-images");
 const albumImagePreview = document.getElementById("album-image-preview");
 
 let pendingAlbumImages = [];
+let editingAlbumImages = [];
+
+function renderAlbumImagePreview(images) {
+  albumImagePreview.replaceChildren();
+  albumImagePreview.style.display = "flex";
+  albumImagePreview.style.flexWrap = "wrap";
+  albumImagePreview.style.alignItems = "flex-start";
+  albumImagePreview.style.gap = "1.5rem 1.25rem";
+
+  images.forEach((image, imageIndex) => {
+    const thumbnailButton = document.createElement("button");
+    thumbnailButton.type = "button";
+    thumbnailButton.style.display = "block";
+    thumbnailButton.style.padding = "0.25rem";
+    thumbnailButton.setAttribute(
+      "aria-label",
+      `View image ${imageIndex + 1}: ${image.name}`
+    );
+
+    const thumbnail = document.createElement("img");
+    thumbnail.src = image.data;
+    thumbnail.alt = image.name;
+    thumbnail.style.maxWidth = "120px";
+    thumbnail.style.maxHeight = "120px";
+    thumbnail.style.objectFit = "contain";
+
+    thumbnailButton.appendChild(thumbnail);
+    const makeCoverButton = document.createElement("button");
+    makeCoverButton.type = "button";
+    makeCoverButton.style.padding = "0.25rem 0.5rem";
+    makeCoverButton.textContent = imageIndex === 0 ? "Current cover" : "Make cover";
+    makeCoverButton.disabled = imageIndex === 0;
+    makeCoverButton.setAttribute(
+      "aria-label",
+      imageIndex === 0 ? "Current cover" : `Make ${image.name} the cover`
+    );
+
+    makeCoverButton.addEventListener("click", () => {
+      if (editingAlbumImages.includes(image)) {
+        editingAlbumImages = [
+          image,
+          ...editingAlbumImages.filter((savedImage) => savedImage !== image)
+        ];
+      } else {
+        editingAlbumImages = [
+          image,
+          ...editingAlbumImages.filter((savedImage) => savedImage !== image)
+        ];
+        pendingAlbumImages = pendingAlbumImages.filter(
+          (pendingImage) => pendingImage !== image
+        );
+      }
+
+      renderAlbumImagePreview([...editingAlbumImages, ...pendingAlbumImages]);
+    });
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    const removeIcon = document.createElement("span");
+    removeIcon.textContent = "×";
+    removeIcon.style.transform = "translateY(-3px)";
+    removeButton.appendChild(removeIcon);
+    removeButton.setAttribute("aria-label", `Remove image: ${image.name}`);
+    removeButton.title = "Remove image";
+    removeButton.style.position = "absolute";
+    removeButton.style.top = "-14px";
+    removeButton.style.right = "-14px";
+    removeButton.style.width = "28px";
+    removeButton.style.height = "28px";
+    removeButton.style.minWidth = "28px";
+    removeButton.style.maxWidth = "28px";
+    removeButton.style.minHeight = "28px";
+    removeButton.style.maxHeight = "28px";
+    removeButton.style.boxSizing = "border-box";
+    removeButton.style.display = "grid";
+    removeButton.style.placeItems = "center";
+    removeButton.style.flexShrink = "0";
+    removeButton.style.padding = "0";
+    removeButton.style.border = "2px solid #c62828";
+    removeButton.style.borderRadius = "50%";
+    removeButton.style.backgroundColor = "#222";
+    removeButton.style.color = "#c62828";
+    removeButton.style.fontSize = "20px";
+    removeButton.style.lineHeight = "1";
+    removeButton.style.cursor = "pointer";
+    removeButton.style.zIndex = "1";
+    removeButton.style.cursor = "pointer";
+
+
+    removeButton.addEventListener("click", () => {
+      editingAlbumImages = editingAlbumImages.filter(
+        (savedImage) => savedImage !== image
+      );
+      pendingAlbumImages = pendingAlbumImages.filter(
+        (pendingImage) => pendingImage !== image
+      );
+
+      renderAlbumImagePreview([...editingAlbumImages, ...pendingAlbumImages]);
+    });
+
+    thumbnailButton.addEventListener("click", () => {
+      let currentIndex = imageIndex;
+
+      const dialog = document.createElement("dialog");
+      dialog.setAttribute("aria-label", "Album art viewer");
+      dialog.style.padding = "1rem";
+      dialog.style.maxWidth = "90vw";
+      dialog.style.maxHeight = "90vh";
+
+      const controls = document.createElement("div");
+      controls.style.display = "flex";
+      controls.style.gap = "0.5rem";
+      controls.style.alignItems = "center";
+
+      const previousButton = document.createElement("button");
+      previousButton.type = "button";
+      previousButton.textContent = "Previous";
+
+      const nextButton = document.createElement("button");
+      nextButton.type = "button";
+      nextButton.textContent = "Next";
+
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.textContent = "Close";
+
+      const imageCount = document.createElement("span");
+
+      const largeImage = document.createElement("img");
+      largeImage.style.display = "block";
+      largeImage.style.maxWidth = "85vw";
+      largeImage.style.maxHeight = "80vh";
+      largeImage.style.objectFit = "contain";
+      largeImage.style.marginTop = "0.75rem";
+
+      function showCurrentImage() {
+        const currentImage = images[currentIndex];
+        largeImage.src = currentImage.data;
+        largeImage.alt = currentImage.name;
+        imageCount.textContent = `${currentIndex + 1} of ${images.length}`;
+        previousButton.disabled = currentIndex === 0;
+        nextButton.disabled = currentIndex === images.length - 1;
+      }
+
+      previousButton.addEventListener("click", () => {
+        if (currentIndex > 0) {
+          currentIndex -= 1;
+          showCurrentImage();
+        }
+      });
+
+      nextButton.addEventListener("click", () => {
+        if (currentIndex < images.length - 1) {
+          currentIndex += 1;
+          showCurrentImage();
+        }
+      });
+
+      closeButton.addEventListener("click", () => dialog.close());
+
+      controls.append(
+        previousButton,
+        imageCount,
+        nextButton,
+        closeButton
+      );
+      dialog.append(controls, largeImage);
+      document.body.appendChild(dialog);
+
+      dialog.addEventListener("close", () => dialog.remove(), { once: true });
+      showCurrentImage();
+      dialog.showModal();
+    });
+
+    const thumbnailItem = document.createElement("div");
+    thumbnailItem.style.display = "inline-flex";
+    thumbnailItem.style.flexDirection = "column";
+    thumbnailItem.style.alignItems = "center";
+    thumbnailItem.style.gap = "0.35rem";
+
+    const thumbnailFrame = document.createElement("div");
+    thumbnailFrame.style.position = "relative";
+    thumbnailFrame.style.display = "inline-block";
+    thumbnailFrame.append(thumbnailButton, removeButton);
+    thumbnailItem.append(thumbnailFrame, makeCoverButton);
+    albumImagePreview.appendChild(thumbnailItem);
+
+  });
+}
+
+
 
 albumImageInput.addEventListener("change", async () => {
   const files = [...albumImageInput.files];
@@ -632,17 +1025,8 @@ albumImageInput.addEventListener("change", async () => {
     }
 
     pendingAlbumImages = compressedImages;
-    albumImagePreview.replaceChildren();
-
-    for (const image of pendingAlbumImages) {
-      const preview = document.createElement("img");
-      preview.src = image.data;
-      preview.alt = `Preview of ${image.name}`;
-      preview.style.maxWidth = "120px";
-      preview.style.maxHeight = "120px";
-      preview.style.objectFit = "contain";
-      albumImagePreview.appendChild(preview);
-    }
+    renderAlbumImagePreview([...editingAlbumImages, ...pendingAlbumImages]);
+    
   } catch (error) {
     console.error("Could not prepare album art:", error);
     alert("One or more images could not be prepared. Try different image files.");
@@ -684,8 +1068,8 @@ form.addEventListener("submit", async (event) => {
 
   const album = {
     id: editingAlbumId || crypto.randomUUID(),
-    artist: formData.get("artist").trim(),
-    album: formData.get("album").trim(),
+    artist: toTitleCase(formData.get("artist").trim()),
+    album: toTitleCase(formData.get("album").trim()),
     genre: formData.get("genre").trim(),
     owner: (formData.get("owner") || "").trim(),
     storageLocation: formData.get("storageLocation").trim(),
@@ -696,6 +1080,7 @@ form.addEventListener("submit", async (event) => {
     vinylCondition: formData.get("vinylCondition") || "",
     sleeveCondition: formData.get("sleeveCondition") || "",
     needsReplacement: form.elements.needsReplacement.checked,
+    images: [...editingAlbumImages, ...pendingAlbumImages],
     tracks: getTrackData()
   };
 

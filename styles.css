@@ -159,9 +159,11 @@ tbody tr:last-child td {
   .table-scroll {
     min-width: 0;
     max-width: 100%;
-    overflow-x: auto;
+    max-height: 70vh;
+    overflow: auto;
     border: 1px solid #ddd;
   }
+
 
   .table-wrapper > #artist-letter-nav {
     grid-column: 2;
@@ -198,6 +200,38 @@ tbody tr:last-child td {
     min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+  }
+    .table-wrapper .album-cell-content {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .table-wrapper .album-cell-content img {
+    flex: 0 0 3.5rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+    object-fit: cover;
+  }
+
+
+  .table-wrapper tbody tr:nth-child(even) td {
+  background: #f7f7f7;
+  }
+
+  .table-wrapper tbody tr:nth-child(even) td:first-child,
+  .table-wrapper tbody tr:nth-child(even) td:nth-child(2),
+  .table-wrapper tbody tr:nth-child(even) td:last-child {
+    background: #f7f7f7;
+  }
+
+  .table-wrapper thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #eee;
   }
 
   .table-wrapper th:first-child,
@@ -238,6 +272,19 @@ tbody tr:last-child td {
   .table-wrapper th:last-child {
     background: #eee;
   }
+      .table-wrapper tbody td:last-child button {
+    display: block;
+    width: 100%;
+    margin: 0 0 0.35rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .table-wrapper tbody td:last-child button:last-child {
+    margin-bottom: 0;
+  }
+
+
 }
 
 
@@ -291,6 +338,24 @@ tbody tr:last-child td {
     border-radius: 0.5rem;
   }
 
+    .table-wrapper tbody tr {
+    position: relative;
+  }
+
+  .table-wrapper tbody td:nth-child(1),
+  .table-wrapper tbody td:nth-child(2) {
+    padding-right: 4.5rem;
+  }
+
+  .table-wrapper .album-cell-content img {
+    position: absolute;
+    top: 0.75rem;
+    right: 2.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.25rem;
+  }
+
+
   tbody td {
     display: grid;
     grid-template-columns: 7rem minmax(0, 1fr);
@@ -300,6 +365,10 @@ tbody tr:last-child td {
     white-space: normal;
     overflow-wrap: anywhere;
   }
+    tbody td:nth-child(4) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
 
   tbody td::before {
     font-weight: 600;
