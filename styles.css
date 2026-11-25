@@ -615,6 +615,24 @@ select:focus-visible {
   align-items: start;
 }
 
+.collection-view-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  max-width: 100%;
+}
+
+.collection-view-content > #collection-table-view,
+.collection-view-content > .collection-gallery {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.collection-view-content > #artist-letter-nav {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 
 table {
   width: 100%;
@@ -653,13 +671,7 @@ tbody tr:last-child td {
   }
 
 
-  .table-wrapper > #artist-letter-nav {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-
-    .table-wrapper > #artist-letter-nav:not([hidden]) {
+    .collection-view-content > #artist-letter-nav:not([hidden]) {
     display: flex;
     flex-direction: column;
     align-self: start;
@@ -958,8 +970,17 @@ tbody tr:last-child td {
     border: 0;
   }
 
-  .table-wrapper > .table-scroll,
-  .table-wrapper > #artist-letter-nav {
+  .collection-view-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .collection-view-content > #collection-table-view,
+  .collection-view-content > .collection-gallery,
+  .collection-view-content > #artist-letter-nav {
+    grid-area: 1 / 1;
+  }
+
+  .table-wrapper > .table-scroll {
     grid-area: 1 / 1;
   }
 
@@ -970,7 +991,7 @@ tbody tr:last-child td {
   }
 
 
-  .table-wrapper > #artist-letter-nav:not([hidden]) {
+  .collection-view-content > #artist-letter-nav:not([hidden]) {
     display: flex;
     flex-direction: column;
     align-self: start;
@@ -986,6 +1007,21 @@ tbody tr:last-child td {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.75rem;
+  }
+
+  .collection-view-content.gallery-mode {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .collection-view-content.gallery-mode > #artist-letter-nav:not([hidden]) {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0.5rem 0;
+  }
+
+  .collection-view-content.gallery-mode > #collection-gallery {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   #artist-letter-nav button {

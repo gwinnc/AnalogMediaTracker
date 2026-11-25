@@ -108,36 +108,38 @@
     </button>
   </div>
 
-  <div id="collection-table-view" class="table-wrapper">
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Artist</th>
-            <th scope="col">Album</th>
-            <th scope="col">Needs replacement</th>
-            <th scope="col">Known Issues</th>
-            <th scope="col">Vinyl condition</th>
-            <th scope="col">Sleeve condition</th>
-            <th scope="col">Genre</th>
-            <th scope="col">Storage location</th>
-            <th scope="col">Album Release Date</th>
-            <th scope="col">Pressing Year</th>
-            <th scope="col">Price paid (USD)</th>
-            <th scope="col">Owner</th>
-            <th scope="col">Last edited</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="collection-table-body">
-          <!-- JavaScript will add album rows here -->
-        </tbody>
-      </table>
+  <div class="collection-view-content">
+    <div id="collection-table-view" class="table-wrapper">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Artist</th>
+              <th scope="col">Album</th>
+              <th scope="col">Needs replacement</th>
+              <th scope="col">Known Issues</th>
+              <th scope="col">Vinyl condition</th>
+              <th scope="col">Sleeve condition</th>
+              <th scope="col">Genre</th>
+              <th scope="col">Storage location</th>
+              <th scope="col">Album Release Date</th>
+              <th scope="col">Pressing Year</th>
+              <th scope="col">Price paid (USD)</th>
+              <th scope="col">Owner</th>
+              <th scope="col">Last edited</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="collection-table-body">
+            <!-- JavaScript will add album rows here -->
+          </tbody>
+        </table>
+      </div>
     </div>
+
+    <div id="collection-gallery" class="collection-gallery" role="list" aria-label="Album gallery" hidden></div>
     <nav id="artist-letter-nav" aria-label="Jump to artist" hidden></nav>
   </div>
-
-  <div id="collection-gallery" class="collection-gallery" role="list" aria-label="Album gallery" hidden></div>
 
   </section>
   <details id="add-record-panel">

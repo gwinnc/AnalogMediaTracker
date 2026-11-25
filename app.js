@@ -16,6 +16,7 @@ const tableViewToggle = document.querySelector("#table-view-toggle");
 const galleryViewToggle = document.querySelector("#gallery-view-toggle");
 const collectionTableView = document.querySelector("#collection-table-view");
 const collectionGallery = document.querySelector("#collection-gallery");
+const collectionViewContent = document.querySelector(".collection-view-content");
 const artistLetterNav = document.querySelector("#artist-letter-nav");
 const addRecordPanel = document.querySelector("#add-record-panel");
 const themeToggle = document.querySelector("#theme-toggle");
@@ -471,7 +472,6 @@ function updateArtistLetterNav(albums, sortMode) {
   artistLetterNav.replaceChildren();
 
   if (
-    collectionViewMode !== "table" ||
     sortMode !== "artist-asc" ||
     albums.length === 0
   ) {
@@ -495,10 +495,13 @@ function updateArtistLetterNav(albums, sortMode) {
     );
 
     button.addEventListener("click", () => {
-      const targetRow = tableBody.querySelector(
-        `tr[data-artist-initial="${letter}"]`
+      const targetContainer = collectionViewMode === "gallery"
+        ? collectionGallery
+        : tableBody;
+      const target = targetContainer.querySelector(
+        `[data-artist-initial="${letter}"]`
       );
-      targetRow?.scrollIntoView({ behavior: "smooth", block: "start" });
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     artistLetterNav.appendChild(button);
@@ -583,6 +586,7 @@ function renderAlbumGallery(albums, searchTerm) {
   for (const album of albums) {
     const card = document.createElement("article");
     card.className = "album-gallery-card";
+    card.dataset.artistInitial = getArtistInitial(album.artist);
     card.setAttribute("role", "listitem");
 
     const albumImages = Array.isArray(album.images) ? album.images : [];
@@ -1307,6 +1311,7 @@ function setCollectionView(mode) {
   collectionViewMode = mode;
   const isGalleryView = mode === "gallery";
 
+  collectionViewContent.classList.toggle("gallery-mode", isGalleryView);
   collectionTableView.hidden = isGalleryView;
   collectionGallery.hidden = !isGalleryView;
   shoppingViewToggle.hidden = isGalleryView;
